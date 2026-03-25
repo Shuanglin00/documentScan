@@ -95,8 +95,10 @@ jobs:
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USERNAME }}
-          key: ${{ secrets.VM_SSH_KEY }}
+          password: ${{ secrets.VM_PASSWORD }}
           port: ${{ secrets.VM_PORT || '22' }}
+          debug: true
+          script_stop: true
           script: |
             #!/bin/bash
             set -e

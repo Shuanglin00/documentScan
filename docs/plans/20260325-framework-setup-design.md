@@ -44,7 +44,7 @@ src/main/resources/
 #### 2.1 MongoDB
 - **版本**: 5.x+
 - **部署**: 虚拟机 192.168.209.128:27017
-- **数据库名**: catBot
+- **数据库名**: documentDB
 - **集合设计**:
   - `documents` - 文档元数据
   - `chunks` - 文档分块内容

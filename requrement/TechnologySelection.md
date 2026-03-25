@@ -12,7 +12,7 @@ java版本 jdk21
 mongodb:
 host: 192.168.209.128
 port: 27017
-database: catBot
+database: documentDB
 auto-index-creation: false
 username: root
 password: example
