@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+*.ipr
+*.iws
+.vscode
+
+# Build output
+target/
+!target/*.jar
+
+# Documentation
+docs/
+*.md
+
+# Local configuration overrides
+config/application-local.conf
+config/application-dev.conf
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+src/test/
+
+# Docker
+Dockerfile
+.dockerignore

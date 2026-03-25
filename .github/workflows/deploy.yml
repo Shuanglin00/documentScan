@@ -1,0 +1,179 @@
+name: Build and Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Run tests
+        run: mvn test -B
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests -B
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=ref,event=tag
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+
+  deploy:
+    name: Deploy to VM
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ secrets.VM_PORT || '22' }}
+          script: |
+            #!/bin/bash
+            set -e
+
+            echo "=== Starting deployment ==="
+            echo "Image: ${{ needs.build-and-push.outputs.image_tag }}"
+
+            # Login to GitHub Container Registry
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull the new image
+            docker pull ${{ needs.build-and-push.outputs.image_tag }}
+
+            # Stop and remove old container
+            echo "Stopping old container..."
+            docker stop documentscan 2>/dev/null || true
+            docker rm documentscan 2>/dev/null || true
+
+            # Run new container
+            echo "Starting new container..."
+            docker run -d \
+              --name documentscan \
+              --restart unless-stopped \
+              --network host \
+              -p 8080:8080 \
+              -e APP_ENV=production \
+              -e LOG_LEVEL=${{ secrets.LOG_LEVEL || 'INFO' }} \
+              -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+              -e MILVUS_HOST="${{ secrets.MILVUS_HOST }}" \
+              -e MILVUS_PORT="${{ secrets.MILVUS_PORT }}" \
+              -e REDIS_HOST="${{ secrets.REDIS_HOST }}" \
+              -e REDIS_PORT="${{ secrets.REDIS_PORT }}" \
+              -e REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
+              -e OLLAMA_BASE_URL="${{ secrets.OLLAMA_BASE_URL }}" \
+              -e OLLAMA_API_KEY="${{ secrets.OLLAMA_API_KEY }}" \
+              -e OLLAMA_CHAT_MODEL="${{ secrets.OLLAMA_CHAT_MODEL }}" \
+              -e OLLAMA_EMBEDDING_MODEL="${{ secrets.OLLAMA_EMBEDDING_MODEL }}" \
+              -e SERVER_HOST="0.0.0.0" \
+              -e SERVER_PORT="8080" \
+              ${{ needs.build-and-push.outputs.image_tag }}
+
+            # Wait for container to be healthy
+            echo "Waiting for container to be healthy..."
+            sleep 10
+
+            # Check container status
+            if docker ps | grep -q documentscan; then
+              echo "✓ Container is running"
+            else
+              echo "✗ Container failed to start"
+              docker logs documentscan
+              exit 1
+            fi
+
+            # Health check
+            echo "Performing health check..."
+            for i in {1..10}; do
+              if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
+                echo "✓ Health check passed"
+                break
+              fi
+              echo "Health check attempt $i/10..."
+              sleep 5
+            done
+
+            # Cleanup old images
+            echo "Cleaning up old images..."
+            docker image prune -af --filter "until=168h"
+
+            echo "=== Deployment completed successfully ==="
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✓ Deployment of version ${{ needs.build-and-push.outputs.version }} completed successfully"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "✗ Deployment failed. Check logs above."

@@ -69,7 +69,9 @@
       "Bash(where:*)",
       "WebFetch(domain:www.humata.ai)",
       "WebFetch(domain:www.chatpdf.com)",
-      "WebFetch(domain:askyourpdf.com)"
+      "WebFetch(domain:askyourpdf.com)",
+      "Bash(java -version 2>&1)",
+      "Bash(ls -lh target/*.jar && jar -tf target/documentScan-1.0-SNAPSHOT.jar | grep -E \"\\(Application|ConfigManager\\)\" | head -10)"
     ]
   }
 }
