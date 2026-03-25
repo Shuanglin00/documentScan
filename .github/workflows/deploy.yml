@@ -83,7 +83,7 @@ jobs:
   deploy:
     name: Deploy to VM
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: production
 
     steps:
@@ -93,11 +93,11 @@ jobs:
       - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.VM_HOST }}
+          host: ${{ secrets.VM_HOST || '192.168.209.128' }}
           username: ${{ secrets.VM_USERNAME }}
           password: ${{ secrets.VM_PASSWORD }}
           port: ${{ secrets.VM_PORT || '22' }}
-          debug: true
+          debug: false
           script_stop: true
           script: |
             #!/bin/bash
