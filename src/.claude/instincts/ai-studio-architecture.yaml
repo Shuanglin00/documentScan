@@ -1,0 +1,33 @@
+---
+id: ai-studio-architecture
+trigger: "when adding new Java files to the project"
+confidence: 0.85
+domain: java
+source: local-repo-analysis
+---
+
+# Follow Layered Architecture
+
+## Action
+Place new Java files in correct locations:
+
+| Layer | Location Pattern |
+|-------|-----------------|
+| Controllers | `*/controller/*Controller.java` |
+| Services | `*/service/*Service.java` |
+| Repositories | `*/dao/*Repository.java` |
+| Entities | `*/dao/*Node.java` (for Neo4j) |
+| Configs | `*/config/*Config.java` |
+| Aspects | `*/aspect/*Aspect.java` |
+| Executors | `bot/framework/executor/*Executor.java` |
+
+## Module Structure
+- **common**: Shared utilities across all modules
+- **dbModel**: Database entities and repositories
+- **ai**: AI, RAG, embeddings (LangChain4j)
+- **bot**: Message handling framework
+- **train**: DJL model inference
+
+## Evidence
+- Analyzed 1000+ file changes
+- Consistent file organization across all commits

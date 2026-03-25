@@ -1,0 +1,35 @@
+---
+id: ai-studio-knowledge-graph
+trigger: "when working with Neo4j knowledge graph"
+confidence: 0.9
+domain: java
+source: local-repo-analysis
+---
+
+# Follow Domain-Unified Ontology for Knowledge Graph
+
+## Action
+For Neo4j knowledge graph entities:
+
+1. All entities extend `EntityNode`
+2. Entity labels use PascalCase: `Character`, `Location`, `Organization`
+3. Properties use snake_case: `entity_name`, `chapter_index`
+4. Relationships use UPPER_SNAKE_CASE: `HAS_ATTRIBUTE`, `LOCATED_AT`
+
+## Core Entity Types
+- **Character**: People in the novel
+- **Location**: Places and settings
+- **Organization**: Groups, sects, factions
+- **Item**: Important objects
+- **Skill**: Abilities and techniques
+- **Event**: Narrative events (BATTLE, DIALOGUE, etc.)
+- **State**: Time-sliced entity state snapshots
+
+## Service Layer
+- `GraphService.java`: Main graph operations
+- Use Cypher templates for queries
+- Chapter-driven indexing
+
+## Evidence
+- 50+ commits related to knowledge graph
+- Comprehensive ontology documentation in `.qoder/quests/`

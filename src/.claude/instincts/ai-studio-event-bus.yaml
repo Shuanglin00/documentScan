@@ -1,0 +1,41 @@
+---
+id: ai-studio-event-bus
+trigger: "when implementing event-driven functionality"
+confidence: 0.9
+domain: java
+source: local-repo-analysis
+---
+
+PublishBus Event Bus Pattern
+
+## Action# Use @
+For event-driven messaging:
+
+1. **Define Event** extending `Event` class
+2. **Annotate with `@PublishBus`** to publish to message bus
+3. **Use `@GroupMessageHandler`** or `@PublishBus` consumer methods
+
+## Example
+```java
+@PublishBus
+public class GroupMessageEvent extends Event {
+    private Long groupId;
+    private String message;
+    // getters/setters
+}
+
+// Consumer
+@GroupMessageHandler
+public void handleGroupMessage(GroupMessageEvent event) {
+    // Process event
+}
+```
+
+## Event Bus Files
+- Publisher: `bot/framework/bus/MessageBus.java`
+- Aspect: `bot/framework/aop/PublishToBusAspect.java`
+- Events: `bot/framework/bus/event/`
+
+## Evidence
+- 30+ event-related commits
+- Core pattern used throughout bot framework
