@@ -3,6 +3,7 @@ package com.shuanglin.documentscan.config;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.avaje.inject.Component;
+import io.milvus.v2.client.ConnectConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,14 +138,11 @@ public class ConfigManager {
     /**
      * Get Milvus configuration.
      */
-    public MilvusConfig getMilvusConfig() {
-        return new MilvusConfig(
-                getString("milvus.host"),
-                getInt("milvus.port"),
-                getString("milvus.db-name"),
-                getString("milvus.collection-name"),
-                getBoolean("milvus.enable")
-        );
+    public ConnectConfig getMilvusConfig () {
+        return ConnectConfig.builder()
+                .uri(getString("milvus.host") + ":" + getString("milvus.port"))
+                .dbName(getString("milvus.db-name"))
+                .build();
     }
 
     /**

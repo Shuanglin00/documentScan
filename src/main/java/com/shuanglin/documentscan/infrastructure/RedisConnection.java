@@ -34,7 +34,6 @@ public class RedisConnection {
         this.config = configManager.getRedisConfig();
     }
 
-    @PostConstruct
     public void initialize() {
         log.info("Initializing Redis connection to {}:{}", config.host(), config.port());
         try {

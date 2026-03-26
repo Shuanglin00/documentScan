@@ -41,14 +41,14 @@ public class HealthCheckService {
      */
     public HealthStatus checkHealth() {
         boolean mongoHealthy = mongoConnection.isHealthy();
-        boolean milvusHealthy = milvusConnection.isEnabled() ? milvusConnection.isHealthy() : true;
+        boolean milvusHealthy = milvusConnection.isHealthy();
         boolean redisHealthy = redisConnection.isHealthy();
 
         boolean overallHealthy = mongoHealthy && milvusHealthy && redisHealthy;
 
         Map<String, Object> details = new HashMap<>();
         details.put("mongodb", mongoHealthy ? "UP" : "DOWN");
-        details.put("milvus", milvusConnection.isEnabled() ? (milvusHealthy ? "UP" : "DOWN") : "DISABLED");
+        details.put("milvus", milvusConnection.isHealthy() ? (milvusHealthy ? "UP" : "DOWN") : "DISABLED");
         details.put("redis", redisHealthy ? "UP" : "DOWN");
 
         return new HealthStatus(overallHealthy, details);

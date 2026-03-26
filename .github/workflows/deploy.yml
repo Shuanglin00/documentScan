@@ -36,11 +36,11 @@ jobs:
           docker stop documentscan 2>/dev/null || true
           docker rm documentscan 2>/dev/null || true
 
-          # 启动新容器（使用 host 网络模式访问 WSL/宿主机服务）
+          # 启动新容器（使用 wslwork 网络访问服务）
           docker run -d \
             --name documentscan \
             --restart unless-stopped \
-            --network host \
+            --network wslwork \
             -e APP_ENV=production \
             -e LOG_LEVEL=INFO \
             -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
