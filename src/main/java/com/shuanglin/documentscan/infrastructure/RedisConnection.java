@@ -34,6 +34,7 @@ public class RedisConnection {
         this.config = configManager.getRedisConfig();
     }
 
+    @PostConstruct
     public void initialize() {
         log.info("Initializing Redis connection to {}:{}", config.host(), config.port());
         try {
@@ -44,7 +45,7 @@ public class RedisConnection {
                     .withTimeout(java.time.Duration.ofMillis(config.timeout()));
 
             if (config.password() != null && !config.password().isEmpty()) {
-                builder.withPassword(config.password());
+                builder.withAuthentication("default", config.password());
             }
 
             RedisURI redisUri = builder.build();
