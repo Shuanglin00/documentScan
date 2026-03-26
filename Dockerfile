@@ -31,8 +31,8 @@ WORKDIR /app
 # Copy the built JAR from builder stage (exclude original-*.jar)
 COPY --from=builder /build/target/documentScan-*.jar app.jar
 
-# Copy configuration (can be overridden via volume mount)
-COPY config/application.conf ./config/
+# 配置文件已打包在 JAR 中 (src/main/resources/application.conf)
+# 如需覆盖配置，请使用 volume mount: -v /path/to/custom.conf:/app/config/application.conf
 
 # Set proper ownership
 RUN chown -R documentscan:documentscan /app
