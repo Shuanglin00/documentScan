@@ -28,8 +28,8 @@ RUN addgroup -g 1001 documentscan && \
 
 WORKDIR /app
 
-# Copy the built JAR from builder stage
-COPY --from=builder /build/target/*.jar app.jar
+# Copy the built JAR from builder stage (exclude original-*.jar)
+COPY --from=builder /build/target/documentScan-*.jar app.jar
 
 # Copy configuration (can be overridden via volume mount)
 COPY config/application.conf ./config/
