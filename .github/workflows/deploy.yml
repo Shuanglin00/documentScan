@@ -19,6 +19,16 @@ jobs:
         run: |
           echo "=== Building and Deploying ==="
 
+          # 检查依赖服务是否可达
+          echo "Checking Milvus connectivity..."
+          MONGO_HOST=$(echo "${{ secrets.MILVUS_HOST }}" | cut -d: -f1)
+          MONGO_PORT=${{ secrets.MILVUS_PORT }}
+          if [ -n "$MONGO_HOST" ] && [ "$MONGO_HOST" != "localhost" ]; then
+            echo "Milvus configured at: $MONGO_HOST:$MONGO_PORT"
+          else
+            echo "Warning: Using localhost for Milvus, ensure it's running on host"
+          fi
+
           # 使用 Docker 多阶段构建（WSL 无需安装 Maven/JDK）
           docker build -t documentscan:latest .
 
@@ -26,11 +36,11 @@ jobs:
           docker stop documentscan 2>/dev/null || true
           docker rm documentscan 2>/dev/null || true
 
-          # 启动新容器
+          # 启动新容器（使用 host 网络模式访问 WSL/宿主机服务）
           docker run -d \
             --name documentscan \
             --restart unless-stopped \
-            -p 8080:8080 \
+            --network host \
             -e APP_ENV=production \
             -e LOG_LEVEL=INFO \
             -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
